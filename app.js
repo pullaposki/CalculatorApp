@@ -1,33 +1,80 @@
-﻿// Create four functions: add(), subtract(), divide(), multiply()
-// Call the correct function when the user clicks on one of the buttons
-// Perform the given calculation using num1 and num2
-// Render the result of the calculation in the paragraph with id="sum-el"
+﻿import {ElementValidator} from "./element-validator.js";
+// Selector constants
+const ELEMENT_IDS = {
+    num1: 'num1-el',
+    num2: 'num2-el',
+    sum: 'sum-el',
+    addBtn: 'add-btn',
+    subBtn: 'sub-btn',
+    mulBtn: 'mul-btn',
+    divBtn: 'div-btn',
+    errEl: 'err-el'
+};
 
-// E.g. if the user clicks on the "Plus" button, you should render 
-// "Sum: 10" (since 8 + 2 = 10) inside the paragraph with id="sum-el"
+const DEFAULT_NUMBER = 0;
 
-import {ElementValidator} from "./element-validator.js";
+const [number1Element, number2Element, sumElement, addButton, subtractButton, multiplyButton, divideButton, errorElement] = ElementValidator.getElementsByIds(ELEMENT_IDS);
 
-const number1Element = document.getElementById("num1-el");
-const number2Element = document.getElementById("num2-el");
-const sumElement = document.getElementById("sum-el");
+resetNumbers();
+addButtonListeners();
+handleInput(number1Element);
+handleInput(number2Element);
 
-const addButton = document.getElementById("add-btn");
-const subtractButton = document.getElementById("sub-btn");
-const multiplyButton = document.getElementById("mul-btn");
-
-ElementValidator.validateElements(number1Element, number2Element, sumElement, addButton, subtractButton, multiplyButton);
-
-let number1;
-let number2;
-number1Element.addEventListener("input", () => number1 = parseInt(number1Element.value, 10));
-number2Element.addEventListener("input", () => number2 = parseInt(number2Element.value, 10));
-
-addButton.addEventListener("click", () => { add(number1,number2) } );
-
-
-function add(num1, num2){
-    sumElement.innerText = num1+num2;
+function addButtonListeners() {
+    addButton.addEventListener("click", performAndReset.bind(null, (a, b) => a + b));
+    subtractButton.addEventListener("click", performAndReset.bind(null, (a, b) => a - b));
+    multiplyButton.addEventListener("click", performAndReset.bind(null, (a, b) => a * b));
+    divideButton.addEventListener("click", performAndReset.bind(null, (a, b) => a / b));
 }
+
+function handleInput(inputElement) {
+    inputElement.addEventListener("input", () => {
+        resetErrorElement();
+        preventNonNumericInput(inputElement);
+        let value = parseInt(inputElement.value, 10);
+        inputElement.value = Number.isNaN(value) ? DEFAULT_NUMBER : value;
+    });
+}
+
+function performAndReset(operation) {
+    let number1 = parseInt(number1Element.value, 10);
+    let number2 = parseInt(number2Element.value, 10);
+
+    if (Number.isNaN(number1) || Number.isNaN(number2)) {
+        errorElement.innerText = "Please enter valid numbers!";
+        return;
+    }
+
+    if (number2 === 0) {
+        errorElement.innerText = "Cannot divide by zero!"
+        return;
+    }
+
+    sumElement.innerText = operation(number1, number2);
+    resetNumbers();
+}
+
+function resetNumbers() {
+    number1Element.value = DEFAULT_NUMBER;
+    number2Element.value = DEFAULT_NUMBER;
+}
+
+function resetErrorElement(){
+    errorElement.innerText = "";
+}
+
+
+function preventNonNumericInput(inputElement) {
+    inputElement.addEventListener("keypress", (event) => {
+        let character = String.fromCharCode(event.which || event.keyCode);
+        if (!/[0-9]/.test(character)) {            
+            errorElement.innerText = "Please enter valid numbers!";
+            event.preventDefault();
+        }
+    });
+}
+
+
+
 
 
