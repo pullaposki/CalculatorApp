@@ -17,38 +17,73 @@ const [number1Element, number2Element, sumElement, addButton, subtractButton, mu
 
 resetNumbers();
 addButtonListeners();
-handleInput(number1Element);
-handleInput(number2Element);
+handleInputFor(number1Element);
+handleInputFor(number2Element);
 
 function addButtonListeners() {
     addButton.addEventListener("click", performAndReset.bind(null, (a, b) => a + b));
     subtractButton.addEventListener("click", performAndReset.bind(null, (a, b) => a - b));
     multiplyButton.addEventListener("click", performAndReset.bind(null, (a, b) => a * b));
-    divideButton.addEventListener("click", performAndReset.bind(null, (a, b) => a / b));
+    divideButton.addEventListener("click", () => {
+        if (parseInt(number2Element.value, 10) === 0) {
+            displayError("Cannot divide by zero!"); 
+            return;
+        }
+        performAndReset((a, b) => a / b)
+    });
 }
 
-function handleInput(inputElement) {
-    inputElement.addEventListener("input", () => {
-        resetErrorElement();
-        preventNonNumericInput(inputElement);
-        let value = parseInt(inputElement.value, 10);
-        inputElement.value = Number.isNaN(value) ? DEFAULT_NUMBER : value;
+function handleInputFor(inputElement) {
+    handleNonNumericInput(inputElement);
+    handlePasteIntoInput(inputElement);
+    inputElement.addEventListener("input", () => { OnInputReceived(inputElement) });
+}
+
+function OnInputReceived(inputElement){
+    resetErrorElement();
+
+    let value = parseFloat(inputElement.value);
+
+    if (Number.isNaN(value)) {
+        inputElement.value = DEFAULT_NUMBER;
+    } else if (value.toString() !== inputElement.value) {
+        // Prevent input like '1..2', '1.2.3', '-.1', etc.
+        displayError("Please enter a valid number!");
+        inputElement.value = DEFAULT_NUMBER;
+    }
+}
+
+function handleNonNumericInput(inputElement) {
+    inputElement.addEventListener("keypress", (event) => {
+        let character = String.fromCharCode(event.which || event.keyCode);
+        if (!isANumberOrADot(character)) {
+            displayError("Please enter valid numbers!");
+
+            // Prevent input from being registered
+            event.preventDefault();
+        }
+    });
+}
+
+function handlePasteIntoInput(inputElement) {
+    inputElement.addEventListener('paste', (event) => {
+        let pasteData = (event.clipboardData || window.clipboardData).getData('text');
+        if (isNonNumeric(pasteData)) {
+            errorElement.innerText = "Please enter valid numbers!";
+            // Prevent paste
+            event.preventDefault();
+        }
     });
 }
 
 function performAndReset(operation) {
-    let number1 = parseInt(number1Element.value, 10);
-    let number2 = parseInt(number2Element.value, 10);
+    let number1 = parseFloat(number1Element.value);
+    let number2 = parseFloat(number2Element.value);
 
     if (Number.isNaN(number1) || Number.isNaN(number2)) {
-        errorElement.innerText = "Please enter valid numbers!";
+        displayError("Please enter valid numbers!");
         return;
-    }
-
-    if (number2 === 0) {
-        errorElement.innerText = "Cannot divide by zero!"
-        return;
-    }
+    }    
 
     sumElement.innerText = operation(number1, number2);
     resetNumbers();
@@ -59,22 +94,18 @@ function resetNumbers() {
     number2Element.value = DEFAULT_NUMBER;
 }
 
+function displayError(text){
+    errorElement.innerText = text;
+}
+
 function resetErrorElement(){
     errorElement.innerText = "";
 }
 
-
-function preventNonNumericInput(inputElement) {
-    inputElement.addEventListener("keypress", (event) => {
-        let character = String.fromCharCode(event.which || event.keyCode);
-        if (!/[0-9]/.test(character)) {            
-            errorElement.innerText = "Please enter valid numbers!";
-            event.preventDefault();
-        }
-    });
+function isNonNumeric(pasteData) {
+    return !/^-?\d+\.?\d*$/.test(pasteData);
 }
 
-
-
-
-
+function isANumberOrADot(character){
+    return /[0-9]|\./.test(character);
+}
