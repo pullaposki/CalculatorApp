@@ -17,8 +17,8 @@ const [number1Element, number2Element, sumElement, addButton, subtractButton, mu
 
 resetNumbers();
 addButtonListeners();
-handleInputFor(number1Element);
-handleInputFor(number2Element);
+addInputListeners(number1Element);
+addInputListeners(number2Element);
 
 function addButtonListeners() {
     addButton.addEventListener("click", performAndReset.bind(null, (a, b) => a + b));
@@ -33,45 +33,36 @@ function addButtonListeners() {
     });
 }
 
-function handleInputFor(inputElement) {
-    handleNonNumericInput(inputElement);
-    handlePasteIntoInput(inputElement);
-    inputElement.addEventListener("input", () => { OnInputReceived(inputElement) });
-}
-
-function OnInputReceived(inputElement){
-    resetErrorElement();
-
-    let value = parseFloat(inputElement.value);
-
-    if (Number.isNaN(value)) {
-        inputElement.value = DEFAULT_NUMBER;
-    } else if (value.toString() !== inputElement.value) {
-        // Prevent input like '1..2', '1.2.3', '-.1', etc.
-        displayError("Please enter a valid number!");
-        inputElement.value = DEFAULT_NUMBER;
-    }
-}
-
-function handleNonNumericInput(inputElement) {
+function addInputListeners(inputElement) {
     inputElement.addEventListener("keypress", (event) => {
         let character = String.fromCharCode(event.which || event.keyCode);
         if (!isANumberOrADot(character)) {
             displayError("Please enter valid numbers!");
 
-            // Prevent input from being registered
             event.preventDefault();
         }
     });
-}
 
-function handlePasteIntoInput(inputElement) {
     inputElement.addEventListener('paste', (event) => {
         let pasteData = (event.clipboardData || window.clipboardData).getData('text');
         if (isNonNumeric(pasteData)) {
             errorElement.innerText = "Please enter valid numbers!";
-            // Prevent paste
+
             event.preventDefault();
+        }
+    });
+
+    inputElement.addEventListener("input", () => {
+        resetErrorElement();
+
+        let value = parseFloat(inputElement.value);
+
+        if (Number.isNaN(value)) {
+            inputElement.value = DEFAULT_NUMBER;
+        } else if (value.toString() !== inputElement.value) {
+            // Prevent input like '1..2', '1.2.3', '-.1', etc.
+            displayError("Please enter a valid number!");
+            inputElement.value = DEFAULT_NUMBER;
         }
     });
 }
